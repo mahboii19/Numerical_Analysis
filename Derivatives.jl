@@ -1,4 +1,4 @@
-using LinearAlgebra, Statistics, Plots, LaTeXStrings
+using LinearAlgebra, Statistics, Plots, LaTeXStrings, DataFrames
 
 # Single line functions
 # Original function
@@ -19,14 +19,17 @@ end
 
 derivative(f, 2, .001)
 
-# Creating x axis values
-n = 100
-x_values = zeros(n+1)
+# Function for creating x-axis values
+function createInput(Start, n_points)
+        x_values = zeros(n_points+1)
 
-initial = 0
-for i in eachindex(x_values)
-    x_values[i] = -50 + initial
-    initial += 1
+        initial = 0
+        for i in eachindex(x_values)
+            x_values[i] = Start + initial
+            initial += 1
+        end
+
+    return x_values
 end
 
 # Array of x-axis values
@@ -82,3 +85,33 @@ y = f_double_prime.(x)
 # Plotting second derivative analytical solution vs numerical solution for x ∈ [-50, 50]
 plot(x, derivatives2, label=L"f''(x)")
 plot!(x, y, label=L"f''(x) = 4")
+
+# Test function for finding n derivatives
+# -- NEED TO IMPLEMENT step_size addition to x_values array for x+h derivative #
+function derivative2(f, step_size, steps)
+
+    # Creating x-axis values using createInput method
+    x_values = createInput(-50, 100)
+    
+    # Creating temp array of zeroes to reference for creating derivative arrays
+    zero_arr = zeros(length(x_values))
+
+    # Initializing empty dataframe - will store derivative arrays
+    df = DataFrame()
+
+    for i in (1:steps)
+        # Initializing derivative array for each n step (contains only zero value as placeholder)
+        deriv_arr = zero_arr
+
+        for i in eachindex(x_values)
+            xph = x_values[i] + step_size
+            dx = xph - x_values[i]
+            deriv_arr[i] = (f(xph) - f(x[i])) / dx
+        end
+
+        column_name = string("Derivative", i)
+
+        df.column_name = deriv_arr
+end
+
+
