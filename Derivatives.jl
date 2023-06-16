@@ -88,30 +88,68 @@ plot!(x, y, label=L"f''(x) = 4")
 
 # Test function for finding n derivatives
 # -- NEED TO IMPLEMENT step_size addition to x_values array for x+h derivative #
-function derivative2(f, step_size, steps)
+function n_derivatives(f, step_size, steps)
 
-    # Creating x-axis values using createInput method
-    x_values = createInput(-50, 100)
-    
-    # Creating temp array of zeroes to reference for creating derivative arrays
-    zero_arr = zeros(length(x_values))
-
-    # Initializing empty dataframe - will store derivative arrays
-    df = DataFrame()
+    # Defining temporary arrays to store values in
+    temp_arr = zeros(101, steps)
+    deriv_arr = zeros(101, steps)
+    x_arr = zeros(101, steps)
 
     for i in (1:steps)
-        # Initializing derivative array for each n step (contains only zero value as placeholder)
-        deriv_arr = zero_arr
 
-        for i in eachindex(x_values)
-            xph = x_values[i] + step_size
-            dx = xph - x_values[i]
-            deriv_arr[i] = (f(xph) - f(x[i])) / dx
+        # Creating initial x-axis values using createInput method - changes by step_size for each n step
+        x_values = broadcast(+, createInput(-50, 100), (i - 1)*step_size)
+
+        # Storing x+h valules for each n step
+        x_arr[:, i] = x_values
+
+        # For loop for calculating derivatives between different intervals (x, x+h,.., x_nh)
+        for j in eachindex(x_values)
+            xph = x_values[j] + step_size
+            dx = xph - x_values[j]
+            temp_arr[j, i]= (f(xph) - f(x_values[j])) / dx
         end
 
-        column_name = string("Derivative", i)
+        if i > 1
+            # Calculating n - 1 derivatives
+            h = x_arr[:, i] - x_arr[:, i-1]
+            deriv_arr[:, i] = broadcast(/, temp_arr[:, i] - temp_arr[:, i-1], h)
+        else
+            # Case for first derivative
+            deriv_arr[:, i] = temp_arr[:, i]
+            println(deriv_arr)
+        end
 
-        df.column_name = deriv_arr
+        #column_name = string("Derivative", i)
+
+    end
+    return deriv_arr
 end
 
+f_derivatives = n_derivatives(f, .001, 2)
 
+# X-axis values
+x = createInput(-50, 100)
+
+#Plotting first derivative analytical solution vs numerical solution for x ∈ [-50, 50]
+y_prime = f_prime.(x)
+first_deriv = f_derivatives[:,1]
+y1 = [y_prime, first_deriv]
+p_deriv1 = plot(x, y1, title="First Derivative", legend=false)
+
+
+#Plotting second derivative analytical solution vs numerical solution for x ∈ [-50, 50]
+y_double_prime = f_double_prime.(x)
+second_deriv = f_derivatives[:,2]
+y2 = [y_double_prime, second_deriv]
+p_deriv2 = plot(x, y2, title="Second Derivative", legend=false)
+
+plot(p_deriv1, p_deriv2, layout=(2,1))
+
+
+plot(x, second_deriv, label=L"f''(x)")
+plot!(x, y_double_prime, seriestype=:scatter,label=L"f''(x) = 4")
+
+df = DataFrame()
+df.A = z
+df.B = l
